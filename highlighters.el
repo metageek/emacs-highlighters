@@ -95,7 +95,9 @@
          (basename (file-name-nondirectory base-file-name))
          (highlights-dir (concat dirname ".highlights/"))
          )
-    (make-directory highlights-dir t)
+    (condition-case error
+      (make-directory highlights-dir t)
+      (file-error nil))
     (concat highlights-dir basename ".el")))
 
 (defun current-highlights-file-name ()
