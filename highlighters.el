@@ -141,7 +141,6 @@
            (let* ((base-file-name (buffer-file-name (current-buffer)))
                   (highlights-file-name (highlights-file-name base-file-name))
                   )
-             (message "(highlighter-after-load-function %s)" base-file-name)
              (if (file-readable-p highlights-file-name)
                  (with-temp-buffer
                    (insert-file-contents highlights-file-name)
@@ -150,7 +149,6 @@
     (let ((start (car overlay-spec))
           (end (cadr overlay-spec))
           (face (tag-to-highlighter (caddr overlay-spec))))
-      (message "%d %d %s" start end (symbol-name face))
       (apply-highlighter start end face))))
 
 (pushnew 'highlighter-after-save-hook after-save-hook)
@@ -172,30 +170,20 @@
   (message "New highlighter: %s" (symbol-name current-highlighter)))
 
 (defun erase-highlighter (start end)
-  (message "(erase-highlighter %d %d)" start end)
   (dolist (overlay (highlighter-overlays-in-current-buffer start end))
-    (message "Overlay (%d %d %s)"
-             (overlay-start overlay) (overlay-end overlay)
-             (symbol-name (overlay-get overlay 'face)))
     (cond
      ((and (<= start (overlay-start overlay))
            (<= (overlay-end overlay) end))
-      (message "1: Deleting all of it")
       (delete-overlay overlay)
       (setq highlighter-overlays (delq overlay highlighter-overlays)))
      ((and (>= start (overlay-start overlay))
            (<= (overlay-end overlay) end))
-      (message "2: Moving it to (%d %d)" (overlay-start overlay) start)
       (move-overlay overlay (overlay-start overlay) start))
      ((and (<= start (overlay-start overlay))
            (>= (overlay-end overlay) end))
-      (message "3: Moving it to (%d %d)" end (overlay-end overlay))
       (move-overlay overlay end (overlay-end overlay)))
      ((and (< (overlay-start overlay) start)
            (< end (overlay-end overlay)))
-       (message "4: Moving it to (%d %d), adding (%d %d)"
-                 (overlay-start overlay) start
-                 end (overlay-end overlay))
         (apply-highlighter end (overlay-end overlay)
                            (overlay-get overlay 'face))
         (move-overlay overlay (overlay-start overlay) start))
