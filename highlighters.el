@@ -90,18 +90,19 @@
     (overlay-put overlay 'face face)
     (push overlay highlighter-overlays)))
 
-(defun highlights-file-name (base-file-name)
+(defun highlights-file-name (base-file-name create-dir-p)
   (let* ((dirname (file-name-directory base-file-name))
          (basename (file-name-nondirectory base-file-name))
          (highlights-dir (concat dirname ".highlights/"))
          )
-    (condition-case error
-      (make-directory highlights-dir t)
-      (file-error nil))
+    (when create-dir-p
+      (condition-case error
+          (make-directory highlights-dir t)
+        (file-error nil)))
     (concat highlights-dir basename ".el")))
 
 (defun current-highlights-file-name ()
-  (highlights-file-name (buffer-file-name (current-buffer))))
+  (highlights-file-name (buffer-file-name (current-buffer)) nil))
 
 (defun highlighter-after-save-hook ()
   (let* ((highlights
@@ -115,7 +116,7 @@
                                    (overlay-end overlay)))
                              highlighter-overlays)))
          (base-file-name (buffer-file-name (current-buffer)))
-         (highlights-file-name (highlights-file-name base-file-name))
+         (highlights-file-name (highlights-file-name base-file-name t))
          )
     (if (or highlights (file-readable-p highlights-file-name))
         (with-temp-buffer
@@ -141,7 +142,8 @@
   (highlighter-clear-all) ; just in case
   (dolist (overlay-spec
            (let* ((base-file-name (buffer-file-name (current-buffer)))
-                  (highlights-file-name (highlights-file-name base-file-name))
+                  (highlights-file-name (highlights-file-name base-file-name
+                                                              nil))
                   )
              (if (file-readable-p highlights-file-name)
                  (with-temp-buffer
